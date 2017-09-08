@@ -1,0 +1,52 @@
+<html>
+<head>
+    <script src="https://aframe.io/releases/0.6.1/aframe.min.js"></script>
+</head>
+<body>
+<script type="application/javascript">
+    AFRAME.registerComponent('facing-origin', {
+        init: function () {
+            this.forward = new THREE.Vector3(0,0,3);
+            this.facingVec = new THREE.Vector3();
+        },
+        tick: function (time, timeDelta) {
+            console.log(this.el.object3D);
+            // entityEl.object3D.getWorldRotation();
+            // console.log("tick");
+
+            this.facingVec = this.el.object3D.quaternion * this.forward;
+            console.log(this.forward);
+            console.log(this.facingVec);
+            this.el.setAttribute('position', {
+                x: this.facingVec.x,
+                y: this.facingVec.y,
+                z: this.facingVec.z
+            });
+        }
+    });
+    AFRAME.registerComponent('floating-shape', {
+        init: function() {
+            this.baseRotation = new THREE.Vector3();
+            this.parentRotation = new THREE.Vector3();
+        },
+        tick: function (time, timeDelta) {
+            this.parentRotation = this.el.object3D.parent.rotation;
+            // console.log(this.parentRotation)
+            this.el.setAttribute('rotation', {
+                x: -1.0 * this.parentRotation.x * 180 / 3.141,
+                y: -1.0 * this.parentRotation.y * 180 / 3.141,
+                z: -1.0 * this.parentRotation.z * 180 / 3.141
+            })
+        }
+    })
+</script>
+<a-scene>
+    <a-sky color="#ECECEC"></a-sky>
+    <a-camera position="0 0 3">
+        <a-dodecahedron floating-shape material="flatShading:true; side:double;" position="0 0 -3" rotation="45 45 0" color="#4CC3D9"></a-dodecahedron>
+        <a-light position="0 0 1"></a-light>
+    </a-camera>
+
+</a-scene>
+</body>
+</html>
