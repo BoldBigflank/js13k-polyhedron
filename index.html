@@ -4,46 +4,39 @@
 </head>
 <body>
 <script type="application/javascript">
-    // AFRAME.registerComponent('facing-origin', {
-    //     init: function () {
-    //         this.forward = new THREE.Vector3(0,0,3);
-    //         this.facingVec = new THREE.Vector3();
-    //     },
-    //     tick: function (time, timeDelta) {
-    //         console.log(this.el.object3D);
-    //         // entityEl.object3D.getWorldRotation();
-    //         // console.log("tick");
-
-    //         this.facingVec = this.el.object3D.quaternion * this.forward;
-    //         console.log(this.forward);
-    //         console.log(this.facingVec);
-    //         this.el.setAttribute('position', {
-    //             x: this.facingVec.x,
-    //             y: this.facingVec.y,
-    //             z: this.facingVec.z
-    //         });
-    //     }
-    // });
+    const growthFactor = 2;
+    const interval = 1000;
     AFRAME.registerComponent('floating-shape', {
+        schema: {
+            interval: {type: 'number', default: 1}
+        },
         init: function() {
             this.baseRotation = new THREE.Vector3();
             this.parentRotation = new THREE.Vector3();
             var material = new THREE.MeshStandardMaterial( { color: 0x00ff00, flatShading:"true", side:"double" } );
             var geometry = new THREE.DodecahedronGeometry(1,0);
-            geometry.faces.pop();
-            geometry.faces.pop();
-            geometry.faces.pop();
+            geometry.faces.splice(Math.floor(Math.random()*12) * 3, 3);
             var mesh = new THREE.Mesh(geometry, material);
             this.el.setObject3D('mesh', mesh);
             console.log(this.el.getObject3D('mesh').geometry);
         },
         tick: function (time, timeDelta) {
+            // shape stays fixed rotation, but position stays in front of camera
             this.parentRotation = this.el.object3D.parent.rotation;
-            // console.log(this.parentRotation)
             this.el.setAttribute('rotation', {
                 x: -1.0 * this.parentRotation.x * 180 / 3.141,
                 y: -1.0 * this.parentRotation.y * 180 / 3.141,
                 z: -1.0 * this.parentRotation.z * 180 / 3.141
+            })
+
+            // Scale is exponential (doubling every interval)
+            let scale = this.el.getAttribute('scale').x
+            scale = scale * Math.pow(growthFactor, (timeDelta/interval));
+            if (scale > 256.0) scale = 1.0;
+            this.el.setAttribute('scale',{
+                x: scale,
+                y: scale,
+                z: scale
             })
         }
     })
@@ -51,7 +44,7 @@
 <a-scene>
     <a-sky color="#ECECEC"></a-sky>
     <a-camera position="0 0 3">
-        <a-entity floating-shape material="flatShading:true; side:double;" position="0 0 -3" rotation="45 45 0" color="#4CC3D9"></a-entity>
+        <a-entity floating-shape material="side:double; color:#4CC3D9;" position="0 0 -16" rotation="45 45 0" color="#4CC3D9"></a-entity>
         <a-light position="0 0 1"></a-light>
     </a-camera>
 
