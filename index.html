@@ -4,30 +4,38 @@
 </head>
 <body>
 <script type="application/javascript">
-    AFRAME.registerComponent('facing-origin', {
-        init: function () {
-            this.forward = new THREE.Vector3(0,0,3);
-            this.facingVec = new THREE.Vector3();
-        },
-        tick: function (time, timeDelta) {
-            console.log(this.el.object3D);
-            // entityEl.object3D.getWorldRotation();
-            // console.log("tick");
+    // AFRAME.registerComponent('facing-origin', {
+    //     init: function () {
+    //         this.forward = new THREE.Vector3(0,0,3);
+    //         this.facingVec = new THREE.Vector3();
+    //     },
+    //     tick: function (time, timeDelta) {
+    //         console.log(this.el.object3D);
+    //         // entityEl.object3D.getWorldRotation();
+    //         // console.log("tick");
 
-            this.facingVec = this.el.object3D.quaternion * this.forward;
-            console.log(this.forward);
-            console.log(this.facingVec);
-            this.el.setAttribute('position', {
-                x: this.facingVec.x,
-                y: this.facingVec.y,
-                z: this.facingVec.z
-            });
-        }
-    });
+    //         this.facingVec = this.el.object3D.quaternion * this.forward;
+    //         console.log(this.forward);
+    //         console.log(this.facingVec);
+    //         this.el.setAttribute('position', {
+    //             x: this.facingVec.x,
+    //             y: this.facingVec.y,
+    //             z: this.facingVec.z
+    //         });
+    //     }
+    // });
     AFRAME.registerComponent('floating-shape', {
         init: function() {
             this.baseRotation = new THREE.Vector3();
             this.parentRotation = new THREE.Vector3();
+            var material = new THREE.MeshStandardMaterial( { color: 0x00ff00, flatShading:"true", side:"double" } );
+            var geometry = new THREE.DodecahedronGeometry(1,0);
+            geometry.faces.pop();
+            geometry.faces.pop();
+            geometry.faces.pop();
+            var mesh = new THREE.Mesh(geometry, material);
+            this.el.setObject3D('mesh', mesh);
+            console.log(this.el.getObject3D('mesh').geometry);
         },
         tick: function (time, timeDelta) {
             this.parentRotation = this.el.object3D.parent.rotation;
@@ -43,7 +51,7 @@
 <a-scene>
     <a-sky color="#ECECEC"></a-sky>
     <a-camera position="0 0 3">
-        <a-dodecahedron floating-shape material="flatShading:true; side:double;" position="0 0 -3" rotation="45 45 0" color="#4CC3D9"></a-dodecahedron>
+        <a-entity floating-shape material="flatShading:true; side:double;" position="0 0 -3" rotation="45 45 0" color="#4CC3D9"></a-entity>
         <a-light position="0 0 1"></a-light>
     </a-camera>
 
