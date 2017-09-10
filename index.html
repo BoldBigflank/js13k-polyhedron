@@ -4,50 +4,113 @@
 </head>
 <body>
 <script type="application/javascript">
-    const growthFactor = 2;
-    const interval = 1000;
+    var game = {
+        inProgress: false,
+        score: 0,
+        highScore: -1
+    };
+    var colors = [
+        "#FF33CC",
+        "#3399FF",
+        "#FF0D00",
+        "#FFA500",
+        "#FFFF00",
+        "#FFF52D",
+        "#CCFF00",
+        "#A0F919",
+        "#EF0071",
+        "#7807DF",
+        "#16E0D2"
+    ];
+    var colorIndex = 0;
+    const growthFactor = 2; // How big it grows each interval
+    const interval = 1000; // How long each interval is
+    AFRAME.registerComponent('collider-check', {
+      dependencies: ['raycaster'],
+      init: function () {
+        var e = this.el.addEventListener('raycaster-intersection', function (evt) {
+            if (game.inProgress) {
+                game.inProgress = false;
+                if (game.score > game.highScore) {
+                    // TODO: Celebrate new high score
+                    game.highScore = game.score;
+                }
+            }
+        });
+      }
+    });
     AFRAME.registerComponent('floating-shape', {
         schema: {
             interval: {type: 'number', default: 1}
         },
         init: function() {
-            this.baseRotation = new THREE.Vector3();
-            this.parentRotation = new THREE.Vector3();
-            var material = new THREE.MeshStandardMaterial( { color: 0x00ff00, flatShading:"true", side:"double" } );
+            this.forward = new THREE.Vector3(0,0,-32);
+            this.helperVector = new THREE.Vector3();
+            this.parentPosition = new THREE.Vector3();
+            this.mainCamera = document.querySelector("#mainCamera");
+            this.randomize();
+            this.scored = false;
+        },
+        tick: function (time, timeDelta) {
+            // Put the 
+            this.helperVector.copy(this.forward).applyQuaternion(this.mainCamera.object3D.quaternion);
+            this.parentPosition.copy(this.mainCamera.getAttribute('position'));
+            this.el.setAttribute('position', {
+                x: this.helperVector.x + this.parentPosition.x,
+                y: this.helperVector.y + this.parentPosition.y,
+                z: this.helperVector.z + this.parentPosition.z
+            })
+            // Scale is exponential (doubling every interval)
+            if (game.inProgress) {
+                let scale = this.el.getAttribute('scale').x
+                scale = scale * Math.pow(growthFactor, (timeDelta/interval));
+                if (scale > 32 && !this.scored) {
+                    game.score++;
+                    this.scored = true;
+                };
+                if (scale > 256.0) {
+                    scale = 1.0;
+                    this.randomize();
+                    this.scored = false;
+                }
+                this.el.setAttribute('scale',{
+                    x: scale,
+                    y: scale,
+                    z: scale
+                })
+            }
+        },
+        randomize: function () {
+            // this.el.setAttribute('material.color', colors[colorIndex++ % colors.length]);
+            var material = new THREE.MeshStandardMaterial( { shading: THREE.FlatShading, color: colors[colorIndex++ % colors.length], side:THREE.DoubleSide } );
             var geometry = new THREE.DodecahedronGeometry(1,0);
             geometry.faces.splice(Math.floor(Math.random()*12) * 3, 3);
             var mesh = new THREE.Mesh(geometry, material);
             this.el.setObject3D('mesh', mesh);
-            console.log(this.el.getObject3D('mesh').geometry);
-        },
-        tick: function (time, timeDelta) {
-            // shape stays fixed rotation, but position stays in front of camera
-            this.parentRotation = this.el.object3D.parent.rotation;
-            this.el.setAttribute('rotation', {
-                x: -1.0 * this.parentRotation.x * 180 / 3.141,
-                y: -1.0 * this.parentRotation.y * 180 / 3.141,
-                z: -1.0 * this.parentRotation.z * 180 / 3.141
-            })
-
-            // Scale is exponential (doubling every interval)
-            let scale = this.el.getAttribute('scale').x
-            scale = scale * Math.pow(growthFactor, (timeDelta/interval));
-            if (scale > 256.0) scale = 1.0;
-            this.el.setAttribute('scale',{
-                x: scale,
-                y: scale,
-                z: scale
-            })
+            var raycasterEl = AFRAME.scenes[0].querySelector('[raycaster]');
+            if(raycasterEl.components.hasOwnProperty("raycaster"))
+                raycasterEl.components.raycaster.refreshObjects();
+        }
+    })
+    document.querySelector('body').addEventListener('click', function (evt) {
+        if (!game.inProgress) {
+            game.inProgress = true;
         }
     })
 </script>
-<a-scene>
+<a-scene id="scene">
+    <a-cube></a-cube>
     <a-sky color="#ECECEC"></a-sky>
-    <a-camera position="0 0 3">
-        <a-entity floating-shape material="side:double; color:#4CC3D9;" position="0 0 -16" rotation="45 45 0" color="#4CC3D9"></a-entity>
+        <a-entity id="shape1" floating-shape class="collidable" scale="1 1 1"></a-entity>
+        <a-entity id="shape2" floating-shape class="collidable" scale=".25 .25 .25"></a-entity>
+        <a-entity id="shape3" floating-shape class="collidable" scale=".0625 .0625 .0625"></a-entity>
+        <a-entity id="shape4" floating-shape class="collidable" scale=".0156 .0156 .0156"></a-entity>
+    <a-camera id="mainCamera" userHeight="0">
+        <a-entity >
+            <a-entity collider-check raycaster="objects:.collidable; far:4; interval: 16;" position="0 -0.1 0" rotation="0 0 0"></a-entity>
+        </a-entity>
         <a-light position="0 0 1"></a-light>
     </a-camera>
-
 </a-scene>
 </body>
 </html>
