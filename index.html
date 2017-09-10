@@ -4,33 +4,41 @@
 </head>
 <body>
 <script type="application/javascript">
+// Intro music
+var myAudioContext = new AudioContext;
+var playSound = function (soundName) {
+    console.log("playing sound", soundName);
+    myAudioContext.close();
+    myAudioContext = new AudioContext;
+    if(soundName == "intro") {
+        with(myAudioContext)[1,1,6,6,6,6,8,8,8,8,8,8,8,8,8,8,8,8,8,8,9,9,10,10,10,10,13,13,13,13,13,13,15,15,15,15].map((v,i)=>{with(createOscillator())v&&start(e=[15,16,5,6,13,14,21,22,23,24,25,26,28,29,30,31,32,33,34,36,27,35,3,4,11,12,1,2,7,9,17,19,8,10,18,20][i]/5,connect(destination),frequency.value=988/1.06**v,type='triangle',)+stop(e+.2)})
+    } else if (soundName == "point") {
+        with(myAudioContext)[18,18,20,20,22,23,23,25,25].map((v,i)=>{with(createOscillator())v&&start(e=[2,7,3,8,10,4,9,1,6][i]/5,connect(destination),frequency.value=988/1.06**v,type='triangle',)+stop(e+.2)})
+    } else if (soundName == "end") {
+        with(myAudioContext)[15,16,17,18,18].map((v,i)=>{with(createOscillator())v&&start(e=[1,2,3,4,5][i]/5,connect(destination),frequency.value=988/1.06**v,type='triangle',)+stop(e+.2)})
+    }
+}
+
     var game = {
         inProgress: false,
         score: 0,
         highScore: -1
     };
     var colors = [
-        "#FF33CC",
-        "#3399FF",
-        "#FF0D00",
-        "#FFA500",
-        "#FFFF00",
-        "#FFF52D",
-        "#CCFF00",
-        "#A0F919",
-        "#EF0071",
-        "#7807DF",
-        "#16E0D2"
+        '#3c6e6f', '#007727', '#b8aa01',
+        '#0350a0', '#966401', 
+        '#48019d', "#730075", '#9c0e3e'
     ];
     var colorIndex = 0;
     const growthFactor = 2; // How big it grows each interval
-    const interval = 1000; // How long each interval is
+    const interval = 1500; // How long each interval is
     AFRAME.registerComponent('collider-check', {
       dependencies: ['raycaster'],
       init: function () {
         var e = this.el.addEventListener('raycaster-intersection', function (evt) {
             if (game.inProgress) {
                 game.inProgress = false;
+                playSound("end");
                 if (game.score > game.highScore) {
                     // TODO: Celebrate new high score
                     game.highScore = game.score;
@@ -49,7 +57,9 @@
             this.parentPosition = new THREE.Vector3();
             this.mainCamera = document.querySelector("#mainCamera");
             this.randomize();
+
             this.scored = false;
+            this.loops = 0;
         },
         tick: function (time, timeDelta) {
             // Put the 
@@ -63,28 +73,33 @@
             // Scale is exponential (doubling every interval)
             if (game.inProgress) {
                 let scale = this.el.getAttribute('scale').x
-                scale = scale * Math.pow(growthFactor, (timeDelta/interval));
+                scale = scale * Math.pow(growthFactor, (timeDelta/(interval-50*this.loops)));
                 if (scale > 32 && !this.scored) {
                     game.score++;
                     this.scored = true;
+                    playSound("point");
                 };
                 if (scale > 256.0) {
                     scale = 1.0;
                     this.randomize();
                     this.scored = false;
+                    this.loops++;
                 }
                 this.el.setAttribute('scale',{
                     x: scale,
                     y: scale,
                     z: scale
-                })
+                });
+            } else {
+                // this.el.setAttribute('visible', false);
+                this.loops = 0;
             }
         },
         randomize: function () {
-            // this.el.setAttribute('material.color', colors[colorIndex++ % colors.length]);
             var material = new THREE.MeshStandardMaterial( { shading: THREE.FlatShading, color: colors[colorIndex++ % colors.length], side:THREE.DoubleSide } );
             var geometry = new THREE.DodecahedronGeometry(1,0);
             geometry.faces.splice(Math.floor(Math.random()*12) * 3, 3);
+            geometry.faces.splice(Math.floor(Math.random()*11) * 3, 3);
             var mesh = new THREE.Mesh(geometry, material);
             this.el.setObject3D('mesh', mesh);
             var raycasterEl = AFRAME.scenes[0].querySelector('[raycaster]');
@@ -95,6 +110,7 @@
     document.querySelector('body').addEventListener('click', function (evt) {
         if (!game.inProgress) {
             game.inProgress = true;
+            playSound("intro");
         }
     })
 </script>
@@ -107,10 +123,11 @@
         <a-entity id="shape4" floating-shape class="collidable" scale=".0156 .0156 .0156"></a-entity>
     <a-camera id="mainCamera" userHeight="0">
         <a-entity >
-            <a-entity collider-check raycaster="objects:.collidable; far:4; interval: 16;" position="0 -0.1 0" rotation="0 0 0"></a-entity>
+            <a-entity collider-check raycaster="objects:.collidable; far:4; interval: 17;"></a-entity>
         </a-entity>
-        <a-light position="0 0 1"></a-light>
+        <a-entity light="color: #AFA; intensity: 1.5" position="0 1 1"></a-entity>
     </a-camera>
+    <a-entity light="type: ambient; color: #BBB"></a-entity>
 </a-scene>
 </body>
 </html>
