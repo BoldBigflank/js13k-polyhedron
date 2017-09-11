@@ -1,17 +1,19 @@
 # js13k-polyhedron
 
-** MVP TODO **
-XPick a random face to remove
-XGrow a shape exponentially
-XHave a game timer manage shapes/scales/colors
-XDetect hits - Raycast self;
-Reset/New Game/Game Over states
-Game Menu - Instructions, score, best
+### MVP TODO ###
+* X Pick a random face to remove
+* X Grow a shape exponentially
+* XHave a game timer manage shapes/scales/colors
+* XDetect hits - Raycast self;
+* XReset/New Game/Game Over states
+* XGame Menu - Instructions, score, best
 
-** BONUS TODO **
-XSound/Music
-Wireframe - Make PNG texture, set UVs OR make another wireframe mesh
-More sound/music to break monotony
+### BONUS TODO ###
+* XSound/Music
+* Wireframe - Make PNG texture, set UVs OR make another wireframe mesh
+* Bugfix - Some shapes are much closer to each other
+* Style - Faster shapes, but same time to find hole
+* More sound/music to break monotony
 
 # js13k-toolkit
 A simple little tool for developing a JS game while keeping it under 13kb zipped
