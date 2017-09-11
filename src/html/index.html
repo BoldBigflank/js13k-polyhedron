@@ -134,7 +134,11 @@ const playSound = function (soundName) {
                     this.scored = true;
                 };
                 if (scale > 256.0) {
-                    scale = 1.0;
+                    let newScale = scale;
+                    document.querySelectorAll('.shape').forEach(function (shape, currentIndex, listObj) {
+                        newScale = Math.min(shape.getAttribute('scale').x, newScale);
+                    })
+                    scale = newScale / 4.0;
                     this.randomize();
                     this.scored = false;
                     this.loops++;
@@ -171,10 +175,10 @@ const playSound = function (soundName) {
 <a-scene id="scene">
     <a-cube></a-cube>
     <a-sky color="#000000"></a-sky>
-    <a-entity id="shape1" floating-shape class="collidable" scale="1 1 1"></a-entity>
-    <a-entity id="shape2" floating-shape class="collidable" scale=".25 .25 .25"></a-entity>
-    <a-entity id="shape3" floating-shape class="collidable" scale=".0625 .0625 .0625"></a-entity>
-    <a-entity id="shape4" floating-shape class="collidable" scale=".0156 .0156 .0156"></a-entity>
+    <a-entity id="shape1" floating-shape class="shape collidable" scale="1 1 1"></a-entity>
+    <a-entity id="shape2" floating-shape class="shape collidable" scale=".25 .25 .25"></a-entity>
+    <a-entity id="shape3" floating-shape class="shape collidable" scale=".0625 .0625 .0625"></a-entity>
+    <a-entity id="shape4" floating-shape class="shape collidable" scale=".0156 .0156 .0156"></a-entity>
     <a-camera id="mainCamera" userHeight="0">
         <a-entity >
             <a-entity collider-check raycaster="objects:.collidable; far:4; interval: 17;"></a-entity>

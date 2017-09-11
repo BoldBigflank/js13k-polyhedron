@@ -9,11 +9,10 @@
 * XGame Menu - Instructions, score, best
 
 ### BONUS TODO ###
-* XSound/Music
 * Wireframe - Make PNG texture, set UVs OR make another wireframe mesh
-* Bugfix - Some shapes are much closer to each other
 * Style - Faster shapes, but same time to find hole
 * More sound/music to break monotony
+* Allow full 3d rotation
 
 # js13k-toolkit
 A simple little tool for developing a JS game while keeping it under 13kb zipped
