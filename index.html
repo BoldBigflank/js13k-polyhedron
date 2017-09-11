@@ -1,13 +1,85 @@
 <html>
 <head>
     <script src="https://aframe.io/releases/0.6.1/aframe.min.js"></script>
+    <style>
+    div.text {
+        font: 24px impact;
+        color: white;
+        position:absolute;
+        width:100%;
+        text-align:center;
+        z-index:100;
+        display:block;
+        -webkit-touch-callout: none; /* iOS Safari */
+            -webkit-user-select: none; /* Safari */
+             -khtml-user-select: none; /* Konqueror HTML */
+               -moz-user-select: none; /* Firefox */
+                -ms-user-select: none; /* Internet Explorer/Edge */
+                    user-select: none; /* Non-prefixed version, currently
+                                          supported by Chrome and Opera */
+    }
+    </style>
 </head>
 <body>
 <script type="application/javascript">
 // Intro music
+var game = {
+    inProgress: false,
+    score: 0,
+    highScore: document.cookie || 0
+};
+const growthFactor = 2; // How big it grows each interval
+const interval = 1500; // How long each interval is
+const resetInterval = 1000;
+var colors = [
+    '#3c6e6f', '#007727', '#b8aa01',
+    '#0350a0', '#966401', 
+    '#48019d', "#730075", '#9c0e3e'
+];
+var colorIndex = 0;
 var myAudioContext = new AudioContext;
-var playSound = function (soundName) {
-    console.log("playing sound", soundName);
+
+const initialize = function () {
+    game.inProgress = false;
+    game.highScore = parseInt(document.cookie) || 0;
+    // Screen text
+    var scoreMessage = (game.score > 0) ? "Last: " + game.score + " " : "Avoid the walls. ";
+    document.getElementById('score').innerHTML = scoreMessage + " Best: " + game.highScore;
+    document.getElementById('title').style.display = "block";
+    document.getElementById('score').style.display = "block";
+    // Shapes
+
+}
+window.onload = initialize;
+
+const newGame = function () {
+    if (game.inProgress) return;
+    game.inProgress = true;
+    game.score = 0;
+    document.getElementById('title').style.display = "none";
+    document.getElementById('score').innerHTML = game.score;
+    playSound("intro");
+}
+
+const increaseScore = function () {
+    game.score++;
+    playSound("point");
+    document.getElementById('score').innerHTML = game.score;
+}
+
+const gameOver = function () {
+    game.inProgress = false;
+    playSound("end");
+    if (game.score > game.highScore) {
+        // TODO: Celebrate new high score
+        game.highScore = game.score;
+        document.cookie = game.highScore;
+    }
+    // Set the shapes back to their initial state
+    initialize();
+}
+
+const playSound = function (soundName) {
     myAudioContext.close();
     myAudioContext = new AudioContext;
     if(soundName == "intro") {
@@ -19,30 +91,12 @@ var playSound = function (soundName) {
     }
 }
 
-    var game = {
-        inProgress: false,
-        score: 0,
-        highScore: -1
-    };
-    var colors = [
-        '#3c6e6f', '#007727', '#b8aa01',
-        '#0350a0', '#966401', 
-        '#48019d', "#730075", '#9c0e3e'
-    ];
-    var colorIndex = 0;
-    const growthFactor = 2; // How big it grows each interval
-    const interval = 1500; // How long each interval is
     AFRAME.registerComponent('collider-check', {
       dependencies: ['raycaster'],
       init: function () {
         var e = this.el.addEventListener('raycaster-intersection', function (evt) {
             if (game.inProgress) {
-                game.inProgress = false;
-                playSound("end");
-                if (game.score > game.highScore) {
-                    // TODO: Celebrate new high score
-                    game.highScore = game.score;
-                }
+                gameOver();
             }
         });
       }
@@ -55,6 +109,7 @@ var playSound = function (soundName) {
             this.forward = new THREE.Vector3(0,0,-32);
             this.helperVector = new THREE.Vector3();
             this.parentPosition = new THREE.Vector3();
+            this.startScale = this.el.getAttribute('scale');
             this.mainCamera = document.querySelector("#mainCamera");
             this.randomize();
 
@@ -74,10 +129,9 @@ var playSound = function (soundName) {
             if (game.inProgress) {
                 let scale = this.el.getAttribute('scale').x
                 scale = scale * Math.pow(growthFactor, (timeDelta/(interval-50*this.loops)));
-                if (scale > 32 && !this.scored) {
-                    game.score++;
+                if (scale > 36 && !this.scored) {
+                    increaseScore();
                     this.scored = true;
-                    playSound("point");
                 };
                 if (scale > 256.0) {
                     scale = 1.0;
@@ -91,8 +145,9 @@ var playSound = function (soundName) {
                     z: scale
                 });
             } else {
-                // this.el.setAttribute('visible', false);
                 this.loops = 0;
+                this.scored = false;
+                this.el.setAttribute('scale', this.startScale);
             }
         },
         randomize: function () {
@@ -107,20 +162,19 @@ var playSound = function (soundName) {
                 raycasterEl.components.raycaster.refreshObjects();
         }
     })
-    document.querySelector('body').addEventListener('click', function (evt) {
-        if (!game.inProgress) {
-            game.inProgress = true;
-            playSound("intro");
-        }
-    })
+    document.querySelector('body').addEventListener('mousedown', newGame)
+    document.querySelector('body').addEventListener('touchstart', newGame);
 </script>
+
+<div id="title" class="text" style="top:10px;">Polyhedron Runner</div>
+<div id="score" class="text" style="bottom:10px;">Loading</div>
 <a-scene id="scene">
     <a-cube></a-cube>
-    <a-sky color="#ECECEC"></a-sky>
-        <a-entity id="shape1" floating-shape class="collidable" scale="1 1 1"></a-entity>
-        <a-entity id="shape2" floating-shape class="collidable" scale=".25 .25 .25"></a-entity>
-        <a-entity id="shape3" floating-shape class="collidable" scale=".0625 .0625 .0625"></a-entity>
-        <a-entity id="shape4" floating-shape class="collidable" scale=".0156 .0156 .0156"></a-entity>
+    <a-sky color="#000000"></a-sky>
+    <a-entity id="shape1" floating-shape class="collidable" scale="1 1 1"></a-entity>
+    <a-entity id="shape2" floating-shape class="collidable" scale=".25 .25 .25"></a-entity>
+    <a-entity id="shape3" floating-shape class="collidable" scale=".0625 .0625 .0625"></a-entity>
+    <a-entity id="shape4" floating-shape class="collidable" scale=".0156 .0156 .0156"></a-entity>
     <a-camera id="mainCamera" userHeight="0">
         <a-entity >
             <a-entity collider-check raycaster="objects:.collidable; far:4; interval: 17;"></a-entity>
