@@ -44,11 +44,12 @@ const initialize = function () {
     game.highScore = parseInt(document.cookie) || 0;
     // Screen text
     var scoreMessage = (game.score > 0) ? "Last: " + game.score + " " : "Avoid the walls. ";
-    document.getElementById('score').innerHTML = scoreMessage + " Best: " + game.highScore;
-    document.getElementById('title').style.display = "block";
-    document.getElementById('score').style.display = "block";
-    // Shapes
-
+    document.getElementById('score').setAttribute("canvas-text", "text: " + scoreMessage + " Best: " + game.highScore);
+    document.getElementById('title').setAttribute("visible", true);
+    document.getElementById('score').setAttribute("visible", true);
+    document.getElementById('shapes').setAttribute("visible", false);
+    document.getElementById('instructions').setAttribute("visible", true);
+    
 }
 window.onload = initialize;
 
@@ -56,15 +57,16 @@ const newGame = function () {
     if (game.inProgress) return;
     game.inProgress = true;
     game.score = 0;
-    document.getElementById('title').style.display = "none";
-    document.getElementById('score').innerHTML = game.score;
+    document.getElementById('shapes').setAttribute("visible", true);
+    document.getElementById('instructions').setAttribute("visible", false);
+    document.getElementById('score').setAttribute("canvas-text", "text: " + game.score);
     playSound("intro");
 }
 
 const increaseScore = function () {
     game.score++;
     playSound("point");
-    document.getElementById('score').innerHTML = game.score;
+    document.getElementById('score').setAttribute("canvas-text", "text: " + game.score);
 }
 
 const gameOver = function () {
@@ -90,7 +92,48 @@ const playSound = function (soundName) {
         with(myAudioContext)[15,16,17,18,18].map((v,i)=>{with(createOscillator())v&&start(e=[1,2,3,4,5][i]/5,connect(destination),frequency.value=988/1.06**v,type='triangle',)+stop(e+.2)})
     }
 }
+    AFRAME.registerComponent('canvas-text', {
+        schema: {
+            text: {type: 'string', default: 'test'},
+            width: {type: 'number', default: 256},
+            height: {type: 'number', default: 24}
+        },
+        init: function() {
+            this.update();
+        },
+        update: function (oldData) {
+            var _ = this;
+            if (!oldData) this.createCanvas(this.data.width, this.data.height);
+            var fontSize = 48;
+            var textSize = {};
+            _.ctx.font = fontSize + "px Impact";
+            _.ctx.fillStyle = "white";
+            _.ctx.textBaseline="hanging"; 
+            while (true) {
+                textSize = _.ctx.measureText(this.data.text);
+                if(textSize.width < this.data.width) {
+                    break;
+                }
+                fontSize -= 2;
+                _.ctx.font = fontSize + "px Impact";
+            }
+            var textDiff = this.data.width - textSize.width;
+            _.ctx.clearRect(0, 0, _.canvas.width, _.canvas.height);
+            _.ctx.fillText(this.data.text, textDiff/2, 10);
+            this.el.setAttribute("src", _.canvas.toDataURL())
+            this.el.setAttribute("width", _.canvas.width/100.0)
+            this.el.setAttribute("height", _.canvas.height/100.0)
+        },
+        createCanvas: function (w, h) {
+            var _ = this;
+            var canvas = document.createElement("canvas");
+            canvas.width = w;
+            canvas.height = h;
+            _.canvas = canvas;
+            _.ctx = canvas.getContext('2d');
 
+        }
+    });
     AFRAME.registerComponent('collider-check', {
       dependencies: ['raycaster'],
       init: function () {
@@ -170,16 +213,21 @@ const playSound = function (soundName) {
     document.querySelector('body').addEventListener('touchstart', newGame);
 </script>
 
-<div id="title" class="text" style="top:10px;">Polyhedron Runner</div>
-<div id="score" class="text" style="bottom:10px;">Loading</div>
 <a-scene id="scene">
-    <a-cube></a-cube>
     <a-sky color="#000000"></a-sky>
-    <a-entity id="shape1" floating-shape class="shape collidable" scale="1 1 1"></a-entity>
-    <a-entity id="shape2" floating-shape class="shape collidable" scale=".25 .25 .25"></a-entity>
-    <a-entity id="shape3" floating-shape class="shape collidable" scale=".0625 .0625 .0625"></a-entity>
-    <a-entity id="shape4" floating-shape class="shape collidable" scale=".0156 .0156 .0156"></a-entity>
+    <a-entity id="shapes">
+        <a-entity id="shape1" floating-shape class="shape collidable" scale="1 1 1"></a-entity>
+        <a-entity id="shape2" floating-shape class="shape collidable" scale=".25 .25 .25"></a-entity>
+        <a-entity id="shape3" floating-shape class="shape collidable" scale=".0625 .0625 .0625"></a-entity>
+        <a-entity id="shape4" floating-shape class="shape collidable" scale=".0156 .0156 .0156"></a-entity>
+    </a-entity>
+    <a-entity id="instructions">
+        <a-dodecahedron color="red" material="flatShading:true;" position="0 0 -10" scale="5 5 5"></a-dodecahedron>
+        <a-dodecahedron color="black" material="wireframe:true;" position="0 0 -10" scale="5 5 5"></a-dodecahedron>
+        <a-image id="title" canvas-text="text:Polyhedron Runner; width:512;height:64" position = "0 1.5 -3"></a-image>
+    </a-entity>
     <a-camera id="mainCamera" userHeight="0">
+        <a-image id="score" canvas-text="text:Loading; width:512;height:64" position = "0 -1.5 -3"></a-image>
         <a-entity >
             <a-entity collider-check raycaster="objects:.collidable; far:4; interval: 17;"></a-entity>
         </a-entity>
