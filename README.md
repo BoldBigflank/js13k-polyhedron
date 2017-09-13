@@ -7,6 +7,9 @@
 * XDetect hits - Raycast self;
 * XReset/New Game/Game Over states
 * XGame Menu - Instructions, score, best
+* XMake the intro shape float (this is important)
+* XMore sounds
+
 
 ### BONUS TODO ###
 * Wireframe - Make PNG texture, set UVs OR make another wireframe mesh

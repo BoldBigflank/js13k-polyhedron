@@ -32,9 +32,7 @@ const growthFactor = 2; // How big it grows each interval
 const interval = 1500; // How long each interval is
 const resetInterval = 1000;
 var colors = [
-    '#3c6e6f', '#007727', '#b8aa01',
-    '#0350a0', '#966401', 
-    '#48019d', "#730075", '#9c0e3e'
+    '#3c6e6f','#9c0e3e', '#007727',"#730075", '#b8aa01','#48019d', '#966401', '#0350a0'
 ];
 var colorIndex = 0;
 var myAudioContext = new AudioContext;
@@ -45,11 +43,10 @@ const initialize = function () {
     // Screen text
     var scoreMessage = (game.score > 0) ? "Last: " + game.score + " " : "Avoid the walls. ";
     document.getElementById('score').setAttribute("canvas-text", "text: " + scoreMessage + " Best: " + game.highScore);
-    document.getElementById('title').setAttribute("visible", true);
-    document.getElementById('score').setAttribute("visible", true);
     document.getElementById('shapes').setAttribute("visible", false);
+    document.getElementById('titleShape').setAttribute("visible", true);
     document.getElementById('instructions').setAttribute("visible", true);
-    
+    document.getElementById('sky').setAttribute('color', "#000000");
 }
 window.onload = initialize;
 
@@ -58,8 +55,9 @@ const newGame = function () {
     game.inProgress = true;
     game.score = 0;
     document.getElementById('shapes').setAttribute("visible", true);
+    document.getElementById('titleShape').setAttribute("visible", false);
     document.getElementById('instructions').setAttribute("visible", false);
-    document.getElementById('score').setAttribute("canvas-text", "text: " + game.score);
+    document.getElementById('score').setAttribute("canvas-text", "text:;");
     playSound("intro");
 }
 
@@ -77,7 +75,6 @@ const gameOver = function () {
         game.highScore = game.score;
         document.cookie = game.highScore;
     }
-    // Set the shapes back to their initial state
     initialize();
 }
 
@@ -87,16 +84,27 @@ const playSound = function (soundName) {
     if(soundName == "intro") {
         with(myAudioContext)[1,1,6,6,6,6,8,8,8,8,8,8,8,8,8,8,8,8,8,8,9,9,10,10,10,10,13,13,13,13,13,13,15,15,15,15].map((v,i)=>{with(createOscillator())v&&start(e=[15,16,5,6,13,14,21,22,23,24,25,26,28,29,30,31,32,33,34,36,27,35,3,4,11,12,1,2,7,9,17,19,8,10,18,20][i]/5,connect(destination),frequency.value=988/1.06**v,type='triangle',)+stop(e+.2)})
     } else if (soundName == "point") {
+        let index = Math.floor(game.score / 4) % 5;
+        if(index == 0) {
         with(myAudioContext)[18,18,20,20,22,23,23,25,25].map((v,i)=>{with(createOscillator())v&&start(e=[2,7,3,8,10,4,9,1,6][i]/5,connect(destination),frequency.value=988/1.06**v,type='triangle',)+stop(e+.2)})
+        } else if (index == 1) {
+            with(myAudioContext)[10,11,13,13,15,20,22].map((v,i)=>{with(createOscillator())v&&start(e=[3,4,6,7,5,2,1][i]/5,connect(destination),frequency.value=988/1.06**v,type='triangle',)+stop(e+.2)})
+        } else if (index == 2) {
+            with(myAudioContext)[13,13,15,15,18,18,18,20].map((v,i)=>{with(createOscillator())v&&start(e=[1,4,2,5,3,7,8,6][i]/5,connect(destination),frequency.value=988/1.06**v,type='triangle',)+stop(e+.2)})
+        } else if (index == 3) {
+            with(myAudioContext)[18,18,20,22,23,25,25,25,25].map((v,i)=>{with(createOscillator())v&&start(e=[1,7,2,4,3,5,6,8,9][i]/5,connect(destination),frequency.value=988/1.06**v,type='triangle',)+stop(e+.2)})
+        } else {
+            with(myAudioContext)[13,17,18,20,22,25,25].map((v,i)=>{with(createOscillator())v&&start(e=[6,5,3,4,2,1,7][i]/5,connect(destination),frequency.value=988/1.06**v,type='triangle',)+stop(e+.2)})
+        }
     } else if (soundName == "end") {
         with(myAudioContext)[15,16,17,18,18].map((v,i)=>{with(createOscillator())v&&start(e=[1,2,3,4,5][i]/5,connect(destination),frequency.value=988/1.06**v,type='triangle',)+stop(e+.2)})
     }
 }
     AFRAME.registerComponent('canvas-text', {
         schema: {
-            text: {type: 'string', default: 'test'},
+            text: {type: 'string', default: ''},
             width: {type: 'number', default: 256},
-            height: {type: 'number', default: 24}
+            height: {type: 'number', default: 64}
         },
         init: function() {
             this.update();
@@ -145,22 +153,13 @@ const playSound = function (soundName) {
       }
     });
     AFRAME.registerComponent('floating-shape', {
-        schema: {
-            interval: {type: 'number', default: 1}
-        },
-        init: function() {
+        init: function () {
             this.forward = new THREE.Vector3(0,0,-32);
             this.helperVector = new THREE.Vector3();
             this.parentPosition = new THREE.Vector3();
-            this.startScale = this.el.getAttribute('scale');
             this.mainCamera = document.querySelector("#mainCamera");
-            this.randomize();
-
-            this.scored = false;
-            this.loops = 0;
         },
         tick: function (time, timeDelta) {
-            // Put the 
             this.helperVector.copy(this.forward).applyQuaternion(this.mainCamera.object3D.quaternion);
             this.parentPosition.copy(this.mainCamera.getAttribute('position'));
             this.el.setAttribute('position', {
@@ -168,10 +167,25 @@ const playSound = function (soundName) {
                 y: this.helperVector.y + this.parentPosition.y,
                 z: this.helperVector.z + this.parentPosition.z
             })
+            
+        }
+    })
+    AFRAME.registerComponent('growing-shape', {
+        schema: {
+            interval: {type: 'number', default: 1}
+        },
+        init: function() {
+            this.startScale = this.el.getAttribute('scale');
+            this.randomize();
+
+            this.scored = false;
+            this.loops = 0;
+        },
+        tick: function (time, timeDelta) {
             // Scale is exponential (doubling every interval)
             if (game.inProgress) {
                 let scale = this.el.getAttribute('scale').x
-                scale = scale * Math.pow(growthFactor, (timeDelta/(interval-50*this.loops)));
+                scale = scale * Math.pow(growthFactor, (timeDelta/(interval-75*this.loops)));
                 if (scale > 36 && !this.scored) {
                     increaseScore();
                     this.scored = true;
@@ -181,6 +195,7 @@ const playSound = function (soundName) {
                     document.querySelectorAll('.shape').forEach(function (shape, currentIndex, listObj) {
                         newScale = Math.min(shape.getAttribute('scale').x, newScale);
                     })
+                    document.getElementById('sky').setAttribute('color', this.color);
                     scale = newScale / 4.0;
                     this.randomize();
                     this.scored = false;
@@ -198,7 +213,8 @@ const playSound = function (soundName) {
             }
         },
         randomize: function () {
-            var material = new THREE.MeshStandardMaterial( { shading: THREE.FlatShading, color: colors[colorIndex++ % colors.length], side:THREE.DoubleSide } );
+            this.color = colors[colorIndex++ % colors.length];
+            var material = new THREE.MeshStandardMaterial( { shading: THREE.FlatShading, color: this.color, side:THREE.DoubleSide } );
             var geometry = new THREE.DodecahedronGeometry(1,0);
             geometry.faces.splice(Math.floor(Math.random()*12) * 3, 3);
             geometry.faces.splice(Math.floor(Math.random()*11) * 3, 3);
@@ -214,19 +230,21 @@ const playSound = function (soundName) {
 </script>
 
 <a-scene id="scene">
-    <a-sky color="#000000"></a-sky>
+    <a-sky id="sky" color="#000000"></a-sky>
     <a-entity id="shapes">
-        <a-entity id="shape1" floating-shape class="shape collidable" scale="1 1 1"></a-entity>
-        <a-entity id="shape2" floating-shape class="shape collidable" scale=".25 .25 .25"></a-entity>
-        <a-entity id="shape3" floating-shape class="shape collidable" scale=".0625 .0625 .0625"></a-entity>
-        <a-entity id="shape4" floating-shape class="shape collidable" scale=".0156 .0156 .0156"></a-entity>
+        <a-entity id="shape1" floating-shape growing-shape class="shape collidable" scale="1 1 1"></a-entity>
+        <a-entity id="shape2" floating-shape growing-shape class="shape collidable" scale=".25 .25 .25"></a-entity>
+        <a-entity id="shape3" floating-shape growing-shape class="shape collidable" scale=".0625 .0625 .0625"></a-entity>
+        <a-entity id="shape4" floating-shape growing-shape class="shape collidable" scale=".0156 .0156 .0156"></a-entity>
     </a-entity>
-    <a-entity id="instructions">
-        <a-dodecahedron color="red" material="flatShading:true;" position="0 0 -10" scale="5 5 5"></a-dodecahedron>
-        <a-dodecahedron color="black" material="wireframe:true;" position="0 0 -10" scale="5 5 5"></a-dodecahedron>
-        <a-image id="title" canvas-text="text:Polyhedron Runner; width:512;height:64" position = "0 1.5 -3"></a-image>
+    <a-entity id="titleShape">
+        <a-dodecahedron floating-shape color="red" material="flatShading:true;" position="0 0 -10" scale="16 16 16"></a-dodecahedron>
+        <a-dodecahedron floating-shape color="black" material="wireframe:true;" position="0 0 -10" scale="16 16 16"></a-dodecahedron>
     </a-entity>
     <a-camera id="mainCamera" userHeight="0">
+        <a-entity id="instructions">
+            <a-image id="title" canvas-text="text:Polyhedron Runner; width:512;height:64" position = "0 1.5 -3"></a-image>
+        </a-entity>
         <a-image id="score" canvas-text="text:Loading; width:512;height:64" position = "0 -1.5 -3"></a-image>
         <a-entity >
             <a-entity collider-check raycaster="objects:.collidable; far:4; interval: 17;"></a-entity>
