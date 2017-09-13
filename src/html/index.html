@@ -41,7 +41,7 @@ const initialize = function () {
     game.inProgress = false;
     game.highScore = parseInt(document.cookie) || 0;
     // Screen text
-    var scoreMessage = (game.score > 0) ? "Last: " + game.score + " " : "Avoid the walls. ";
+    var scoreMessage = (game.score > 0) ? "Last: " + game.score + " " : "Swivel chair recommended. ";
     document.getElementById('score').setAttribute("canvas-text", "text: " + scoreMessage + " Best: " + game.highScore);
     document.getElementById('shapes').setAttribute("visible", false);
     document.getElementById('titleShape').setAttribute("visible", true);
@@ -244,6 +244,8 @@ const playSound = function (soundName) {
     <a-camera id="mainCamera" userHeight="0">
         <a-entity id="instructions">
             <a-image id="title" canvas-text="text:Polyhedron Runner; width:512;height:64" position = "0 1.5 -3"></a-image>
+            <a-image id="title" canvas-text="text:You are always flying toward the center; width:512;height:64" position = "0 1.0 -3"></a-image>
+            <a-image id="title" canvas-text="text:Move your body to line up with the holes; width:512;height:64" position = "0 0.5 -3"></a-image>
         </a-entity>
         <a-image id="score" canvas-text="text:Loading; width:512;height:64" position = "0 -1.5 -3"></a-image>
         <a-entity >
